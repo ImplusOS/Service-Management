@@ -29,8 +29,8 @@ AR   := $(CROSS_COMPILE)ar
 NASM ?= nasm
 
 # Service identity is derived from the directory name, never spelled out.
-SERVICE_NAME    := $(notdir $(patsubst %/,%,$(abspath $(CURDIR)/..)))
-REPO_ROOT       := $(abspath $(CURDIR)/../..)
+SERVICE_NAME    := $(notdir $(patsubst %/,%,$(CURDIR)))
+REPO_ROOT       := $(abspath $(CURDIR)/../../..)
 TOP_BUILD_DIR   ?= $(REPO_ROOT)/Build/$(ARCH)
 SERVICE_BUILD   := $(TOP_BUILD_DIR)/Userland/Service/$(SERVICE_NAME)
 SERVICE_SO      := $(SERVICE_BUILD)/$(SERVICE_NAME).so

@@ -38,10 +38,10 @@ SERVICE_RUNTIME_DIR := /Userland/Service/$(SERVICE_NAME)
 
 SERVICE_CFLAGS := -ffreestanding -fno-stack-protector -fno-builtin -fPIC \
                  $(SERVICE_ARCH_CFLAGS) -nostdlib -nostartfiles -nodefaultlibs \
-                 -I$(REPO_ROOT)/I_libc/Source/include \
-                 -I$(REPO_ROOT)/I_libc/Source/include/sys \
-                 -I$(REPO_ROOT)/Userland-Common/Source \
-                 -I$(REPO_ROOT)/API/Source \
+                 -I$(REPO_ROOT)/libc/I_libc/Source/include \
+                 -I$(REPO_ROOT)/libc/I_libc/Source/include/sys \
+                 -I$(REPO_ROOT)/Userland/Source \
+                 -I$(REPO_ROOT)/Userland/API/Source \
                  -Os -g0 -ffunction-sections -fdata-sections -MMD -MP
 
 SERVICE_LDFLAGS := -shared -nostdlib --build-id=none --gc-sections \

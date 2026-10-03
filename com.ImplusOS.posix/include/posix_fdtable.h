@@ -3,7 +3,9 @@
 #include <stdint.h>
 #include "posix_errno.h"
 
-#define POSIX_FD_TABLE_SIZE  1024
+/* Initial table size; grows on demand up to a reasonable maximum. */
+#define POSIX_FD_TABLE_INITIAL  256
+#define POSIX_FD_TABLE_MAX      65536
 
 #define POSIX_SFL_APPEND    0x0400
 #define POSIX_SFL_NONBLOCK  0x0800
@@ -26,6 +28,13 @@ typedef struct {
     int      fd_flags;
 } posix_fd_entry_t;
 
+/* Dynamic fd table management */
+typedef struct {
+    posix_fd_entry_t *entries;
+    int capacity;
+} posix_fd_table_t;
+
+/* Table accessor (single global instance for the process) */
 posix_fd_entry_t *posix_fd_entry(int fd);
 void posix_fd_open(int fd, int type, int status_flags);
 void posix_fd_close(int fd);
@@ -35,3 +44,6 @@ int posix_fd_get_flags(int fd);
 int posix_fd_set_flags(int fd, int flags);
 int posix_fd_get_fdflags(int fd);
 int posix_fd_set_fdflags(int fd, int fdflags);
+
+/* Internal: ensure table has capacity for `fd`; returns NULL on failure */
+posix_fd_entry_t *posix_fd_entry_grow(int fd);

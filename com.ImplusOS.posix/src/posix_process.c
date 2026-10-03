@@ -87,7 +87,7 @@ static void close_cloexec_fds(void)
     extern int posix_fd_get_fdflags(int fd);
     extern void posix_fd_close(int fd);
 
-    for (int fd = 0; fd < POSIX_FD_TABLE_SIZE; fd++) {
+    for (int fd = 0; fd < POSIX_FD_TABLE_MAX; fd++) {
         posix_fd_entry_t *e = posix_fd_entry(fd);
         if (e && e->valid && (e->fd_flags & POSIX_FDF_CLOEXEC)) {
             file_close((int32_t)fd);

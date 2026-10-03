@@ -1,33 +1,73 @@
- 
-
 #include "../include/posix_fdtable.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
- 
-
-static posix_fd_entry_t g_fd_table[POSIX_FD_TABLE_SIZE];
-
- 
+static posix_fd_entry_t *g_fd_table = NULL;
+static int g_fd_capacity = 0;
 
 static posix_fd_entry_t *entry_get(int fd)
 {
-    if (fd < 0 || fd >= POSIX_FD_TABLE_SIZE) {
+    if (fd < 0) {
+        return NULL;
+    }
+    if (fd >= g_fd_capacity) {
         return NULL;
     }
     return &g_fd_table[fd];
 }
 
- 
+static posix_fd_entry_t *entry_grow(int fd)
+{
+    if (fd < 0 || fd >= POSIX_FD_TABLE_MAX) {
+        return NULL;
+    }
+    int new_capacity = g_fd_capacity ? g_fd_capacity * 2 : POSIX_FD_TABLE_INITIAL;
+    while (new_capacity <= fd && new_capacity < POSIX_FD_TABLE_MAX) {
+        new_capacity *= 2;
+    }
+    if (new_capacity > POSIX_FD_TABLE_MAX) {
+        new_capacity = POSIX_FD_TABLE_MAX;
+    }
+
+    posix_fd_entry_t *new_entries = (posix_fd_entry_t *)realloc(g_fd_table,
+        (size_t)new_capacity * sizeof(posix_fd_entry_t));
+    if (!new_entries) {
+        return NULL;
+    }
+    /* Zero the newly allocated entries */
+    if (new_capacity > g_fd_capacity) {
+        memset(&new_entries[g_fd_capacity], 0,
+               (size_t)(new_capacity - g_fd_capacity) * sizeof(posix_fd_entry_t));
+    }
+    g_fd_table = new_entries;
+    g_fd_capacity = new_capacity;
+    return &g_fd_table[fd];
+}
 
 posix_fd_entry_t *posix_fd_entry(int fd)
 {
-    return entry_get(fd);
+    posix_fd_entry_t *e = NULL;
+    if (fd < 0) {
+        return NULL;
+    }
+    if (fd < g_fd_capacity) {
+        e = &g_fd_table[fd];
+    } else {
+        e = entry_grow(fd);
+    }
+    return e;
+}
+
+posix_fd_entry_t *posix_fd_entry_grow(int fd)
+{
+    return entry_grow(fd);
 }
 
 void posix_fd_open(int fd, int type, int status_flags)
 {
-    posix_fd_entry_t *e = entry_get(fd);
+    posix_fd_entry_t *e = posix_fd_entry(fd);
     if (!e) {
         return;
     }
@@ -58,7 +98,7 @@ int posix_fd_is_valid(int fd)
 void posix_fd_dup(int src, int dst)
 {
     posix_fd_entry_t *se = entry_get(src);
-    posix_fd_entry_t *de = entry_get(dst);
+    posix_fd_entry_t *de = posix_fd_entry(dst);
     if (!se || !de) {
         return;
     }

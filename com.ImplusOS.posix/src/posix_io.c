@@ -150,18 +150,30 @@ int posix_select(int nfds, fd_set *readfds, fd_set *writefds,
         return -1;
     }
 
-    fd_set requested_read;
-    fd_set requested_write;
-    fd_set requested_except;
-    if (readfds) requested_read = *readfds;
-    if (writefds) requested_write = *writefds;
-    if (exceptfds) requested_except = *exceptfds;
+    fd_set requested_read = {0};
+    fd_set requested_write = {0};
+    fd_set requested_except = {0};
+    fd_set_init(&requested_read);
+    fd_set_init(&requested_write);
+    fd_set_init(&requested_except);
+    if (readfds) {
+        requested_read = *readfds;
+    }
+    if (writefds) {
+        requested_write = *writefds;
+    }
+    if (exceptfds) {
+        requested_except = *exceptfds;
+    }
 
     for (int fd = 0; fd < nfds && fd < FD_SETSIZE; fd++) {
         if ((readfds && FD_ISSET(fd, &requested_read)) ||
             (writefds && FD_ISSET(fd, &requested_write)) ||
             (exceptfds && FD_ISSET(fd, &requested_except))) {
             if (!posix_fd_is_valid(fd)) {
+                fd_set_free(&requested_read);
+                fd_set_free(&requested_write);
+                fd_set_free(&requested_except);
                 errno = EBADF;
                 return -1;
             }
@@ -178,9 +190,15 @@ int posix_select(int nfds, fd_set *readfds, fd_set *writefds,
     uint32_t sleep_time = 1u;
 
     for (;;) {
-        if (readfds) FD_ZERO(readfds);
-        if (writefds) FD_ZERO(writefds);
-        if (exceptfds) FD_ZERO(exceptfds);
+        if (readfds) {
+            FD_ZERO(readfds);
+        }
+        if (writefds) {
+            FD_ZERO(writefds);
+        }
+        if (exceptfds) {
+            FD_ZERO(exceptfds);
+        }
         int ready_count = 0;
 
         for (int fd = 0; fd < nfds; ++fd) {
@@ -213,6 +231,9 @@ int posix_select(int nfds, fd_set *readfds, fd_set *writefds,
         }
 
         if (ready_count != 0 || (finite_timeout && get_uptime_ms() >= deadline)) {
+            fd_set_free(&requested_read);
+            fd_set_free(&requested_write);
+            fd_set_free(&requested_except);
             os_errno = 0;
             return ready_count;
         }

@@ -375,7 +375,7 @@ void dns_set_default_server(uint32_t dns_server_ip)
 uint32_t dns_resolve(const char *hostname)
 {
     /* Prefer whatever DNS server DHCP actually leased us (real network,
-     * including AX900 Wi-Fi once associated) over the hardcoded
+     * including Wi-Fi once associated) over the hardcoded
      * QEMU-user-mode-NAT default below -- see Kernel/Network/network_main.c.
      * dns_set_default_server() still wins when the caller explicitly set
      * one and no DHCP lease exists yet. */
